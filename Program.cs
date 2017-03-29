@@ -7,7 +7,7 @@ using OpenTK;
 namespace ChessAI{
     public class Program{
         public static void Main(string[] args){
-            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: en passant, not moving to squares resulting in check for you
+            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: >>en passant<<
             game.canvas.NextFrame(game.Initialize);
         }
     }
@@ -18,14 +18,14 @@ namespace ChessAI{
         public static ChessBoard chessBoard;
         public static ChessSquare[,] board;
         public double timer = 1;
-        public bool whiteTurn = true;
         public bool whitePlayer = true;
         public bool blackPlayer = true;
-        bool paused = false;
+        public bool paused = false;
         public static float squareSize;
         public bool selected;
         public Vector2i lastSelected;
         public Vector2i[] available;
+        bool debug = false;
 
         public ChessGame(int windowWidth, int windowHeight, int width, int height){
             current = this;
@@ -66,11 +66,6 @@ namespace ChessAI{
 
         public void SetupBoard(){
             for (int i = 0; i < 8; i++){
-                for (int j = 0; j < 8; j++){
-                    board[i, j] = new ChessSquare();
-                }
-            }
-            for (int i = 0; i < 8; i++){
                 board[i, 1].piece = new Pawn(i, 1, false);
                 board[i, 6].piece = new Pawn(i, 6, true);
             }
@@ -93,6 +88,15 @@ namespace ChessAI{
         }
 
         public void KeyboardInterrupt(){
+            if((debug || paused) && canvas.LastPressedChar == 'r'){
+                chessBoard = new ChessBoard();
+                board = chessBoard.board;
+                canvas.ClearObjects();
+                DrawBoard();
+                SetupBoard();
+                canvas.Draw(new Group(0, 0));
+                paused = false;
+            }
             if(canvas.LastPressedChar == ' '){
                 paused = !paused;
             }
@@ -107,6 +111,9 @@ namespace ChessAI{
         }
 
         public void MouseClick(){
+            if(paused){
+                return;
+            }
             Vector2i mousePos = canvas.MousePosition();
             Vector2d pos = canvas.ScreenToWorldPosition(mousePos);
             int x = (int) Math.Floor(pos.X/squareSize);
@@ -115,10 +122,14 @@ namespace ChessAI{
                 return;
             }
             if(selected == false){
-                if(board[x, y].piece != null){
+                if(board[x, y].Occupied && ((board[x, y].piece.isBlack && !chessBoard.whiteTurn && blackPlayer) || (!board[x, y].piece.isBlack && chessBoard.whiteTurn && whitePlayer))){
                     selected = true;
                     lastSelected = new Vector2i(x, y);
-                    available = board[x, y].piece.AvailableMoves();
+                    available = board[x, y].piece.NonPseudoAvailableMoves();
+                    if(available.Length == 0){
+                        selected = false;
+                        return;
+                    }
                     Group g = new Group(0, 0);
                     //Console.WriteLine(canvas.toDraw.Count + ", " + selected.objects.Count + ", " + available.Length);
                     for (int i = 0; i < available.Length; i++){
@@ -129,7 +140,7 @@ namespace ChessAI{
                     canvas.toDraw.RemoveAt(canvas.toDraw.Count-1);
                     canvas.Draw(g);
                 }
-            } else if(new List<Vector2i>(available).Contains(new Vector2i(x, y))){
+            } else if(available != null && new List<Vector2i>(available).Contains(new Vector2i(x, y))){
                 chessBoard.lastMoveFrom = lastSelected;
                 chessBoard.lastMoveTo = new Vector2i(x, y);
                 board[lastSelected.x, lastSelected.y].piece.Move(x, y);
@@ -137,7 +148,9 @@ namespace ChessAI{
                 Group g = new Group(0, 0);
                 canvas.toDraw.RemoveAt(canvas.toDraw.Count-1);
                 canvas.Draw(g);
-                chessBoard.CheckDetect();
+                if(!debug){
+                    chessBoard.EndTurn();
+                }
             } else{
                 selected = false;
                 Group g = new Group(0, 0);

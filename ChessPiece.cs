@@ -32,8 +32,20 @@ namespace ChessAI{
             cb.board[x, y].piece = this;
         }
 
-        public virtual Vector2i[] AvailableMoves(){
+        public virtual Piece Clone(){
+            return (Piece) this.MemberwiseClone();
+        }
+
+        public virtual Vector2i[] AvailableMoves(ChessBoard cb = null){
             return new Vector2i[0];
+        }
+
+        public virtual Vector2i[] NonPseudoAvailableMoves(){ //FIXME: This is ineffective AF!
+            List<Vector2i> moves = new List<Vector2i>(AvailableMoves());
+            for (int i = moves.Count-1; i >= 0; i--){
+                if(ChessGame.chessBoard.resultsInCheck(x, y, moves[i].x, moves[i].y)) moves.RemoveAt(i);
+            }
+            return moves.ToArray();
         }
     }
     public class Pawn : Piece{
@@ -77,21 +89,22 @@ namespace ChessAI{
             return 1;
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             if(isBlack){
                 if(y-1>=0){
-                    if(y == 6 && !ChessGame.board[x, y-1].Occupied && !ChessGame.board[x, y-2].Occupied) moves.Add(new Vector2i(x, y-2));
-                    if(!ChessGame.board[x, y-1].Occupied) moves.Add(new Vector2i(x, y-1));
-                    if(x+1<8 && ChessGame.board[x+1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-1));
-                    if(x-1>=0 && ChessGame.board[x-1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-1));
+                    if(y == 6 && !cb.board[x, y-1].Occupied && !cb.board[x, y-2].Occupied) moves.Add(new Vector2i(x, y-2));
+                    if(!cb.board[x, y-1].Occupied) moves.Add(new Vector2i(x, y-1));
+                    if(x+1<8 && cb.board[x+1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-1));
+                    if(x-1>=0 && cb.board[x-1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-1));
                 }
             } else{
                 if(y+1<8){
-                    if(y == 1 && !ChessGame.board[x, y+1].Occupied && !ChessGame.board[x, y+2].Occupied) moves.Add(new Vector2i(x, y+2));
-                    if(!ChessGame.board[x, y+1].Occupied) moves.Add(new Vector2i(x, y+1));
-                    if(x+1<8 && ChessGame.board[x+1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+1));
-                    if(x-1>=0 && ChessGame.board[x-1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+1));
+                    if(y == 1 && !cb.board[x, y+1].Occupied && !cb.board[x, y+2].Occupied) moves.Add(new Vector2i(x, y+2));
+                    if(!cb.board[x, y+1].Occupied) moves.Add(new Vector2i(x, y+1));
+                    if(x+1<8 && cb.board[x+1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+1));
+                    if(x-1>=0 && cb.board[x-1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+1));
                 }
             }
             return moves.ToArray();
@@ -172,26 +185,27 @@ namespace ChessAI{
             return 5;
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             for(int i = x+1; i<8; i++){
-                if(!ChessGame.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
-                else if((ChessGame.board[i, y].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
+                if(!cb.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
+                else if((cb.board[i, y].OccupiedIsBlack && !isBlack) || (cb.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
                 else {break;}
             }
             for(int i = x-1; i>=0; i--){
-                if(!ChessGame.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
-                else if((ChessGame.board[i, y].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
+                if(!cb.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
+                else if((cb.board[i, y].OccupiedIsBlack && !isBlack) || (cb.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
                 else {break;}
             }
             for(int i = y+1; i<8; i++){
-                if(!ChessGame.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
-                else if((ChessGame.board[x, i].OccupiedIsBlack && !isBlack) || (ChessGame.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
+                if(!cb.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
+                else if((cb.board[x, i].OccupiedIsBlack && !isBlack) || (cb.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
                 else {break;}
             }
             for(int i = y-1; i>=0; i--){
-                if(!ChessGame.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
-                else if((ChessGame.board[x, i].OccupiedIsBlack && !isBlack) || (ChessGame.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
+                if(!cb.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
+                else if((cb.board[x, i].OccupiedIsBlack && !isBlack) || (cb.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
                 else {break;}
             }
             return moves.ToArray();
@@ -211,6 +225,9 @@ namespace ChessAI{
             p.setFillMode(PolygonMode.Line);
             p.color = !isBlack ? Colorb.Black : Colorb.White;
             group.Add(p);
+            /*PolygonUnfilled pu = new PolygonUnfilled(new float[]{8, 9, 5.25f, 10, 2.0f, 7, 3.25f, 5, 5, 6, 4, 3, 9, 3});
+            pu.color = !isBlack ? Colorb.Black : Colorb.White;
+            group.Add(pu);*/
             Square s = new Square(3f, 1.5f, 10f, 3);
             s.color = isBlack ? Colorb.Black : Colorb.White;
             group.Add(s);
@@ -226,26 +243,27 @@ namespace ChessAI{
             return 3;
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             if(isBlack){
-                if(x+1<8 && y+2<8 && !ChessGame.board[x+1, y+2].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+2));
-                if(x-1>=0 && y+2<8 && !ChessGame.board[x-1, y+2].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+2));
-                if(x+1<8 && y-2>=0 && !ChessGame.board[x+1, y-2].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y-2));
-                if(x-1>=0 && y-2>=0 && !ChessGame.board[x-1, y-2].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y-2));
-                if(y+1<8 && x+2<8 && !ChessGame.board[x+2, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+2, y+1));
-                if(y-1>=0 && x+2<8 && !ChessGame.board[x+2, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x+2, y-1));
-                if(y+1<8 && x-2>=0 && !ChessGame.board[x-2, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-2, y+1));
-                if(y-1>0 && x-2>=0 && !ChessGame.board[x-2, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x-2, y-1));
+                if(x+1<8 && y+2<8 && !cb.board[x+1, y+2].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+2));
+                if(x-1>=0 && y+2<8 && !cb.board[x-1, y+2].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+2));
+                if(x+1<8 && y-2>=0 && !cb.board[x+1, y-2].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y-2));
+                if(x-1>=0 && y-2>=0 && !cb.board[x-1, y-2].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y-2));
+                if(y+1<8 && x+2<8 && !cb.board[x+2, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+2, y+1));
+                if(y-1>=0 && x+2<8 && !cb.board[x+2, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x+2, y-1));
+                if(y+1<8 && x-2>=0 && !cb.board[x-2, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-2, y+1));
+                if(y-1>0 && x-2>=0 && !cb.board[x-2, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x-2, y-1));
             } else{
-                if(x+1<8 && y+2<8 && !ChessGame.board[x+1, y+2].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y+2));
-                if(x-1>=0 && y+2<8 && !ChessGame.board[x-1, y+2].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y+2));
-                if(x+1<8 && y-2>=0 && !ChessGame.board[x+1, y-2].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-2));
-                if(x-1>=0 && y-2>=0 && !ChessGame.board[x-1, y-2].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-2));
-                if(y+1<8 && x+2<8 && !ChessGame.board[x+2, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x+2, y+1));
-                if(y-1>=0 && x+2<8 && !ChessGame.board[x+2, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+2, y-1));
-                if(y+1<8 && x-2>=0 && !ChessGame.board[x-2, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x-2, y+1));
-                if(y-1>=0 && x-2>=0 && !ChessGame.board[x-2, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-2, y-1));
+                if(x+1<8 && y+2<8 && !cb.board[x+1, y+2].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y+2));
+                if(x-1>=0 && y+2<8 && !cb.board[x-1, y+2].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y+2));
+                if(x+1<8 && y-2>=0 && !cb.board[x+1, y-2].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-2));
+                if(x-1>=0 && y-2>=0 && !cb.board[x-1, y-2].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-2));
+                if(y+1<8 && x+2<8 && !cb.board[x+2, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x+2, y+1));
+                if(y-1>=0 && x+2<8 && !cb.board[x+2, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+2, y-1));
+                if(y+1<8 && x-2>=0 && !cb.board[x-2, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x-2, y+1));
+                if(y-1>=0 && x-2>=0 && !cb.board[x-2, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-2, y-1));
             }
             return moves.ToArray();
         }
@@ -304,33 +322,34 @@ namespace ChessAI{
             return 3;
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             int j = y+1;
             for(int i = x+1; i<8 && j<8; i++){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j++;
             }
             j = y-1;
             for(int i = x+1; i<8 && j>=0; i++){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j--;
             }
             j = y+1;
             for(int i = x-1; i>=0 && j<8; i--){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j++;
             }
             j = y-1;
             for(int i = x-1; i>=0 && j>=0; i--){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j--;
             }
@@ -415,53 +434,54 @@ namespace ChessAI{
             return 9;
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             for(int i = x+1; i<8; i++){
-                if(!ChessGame.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
-                else if((ChessGame.board[i, y].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
+                if(!cb.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
+                else if((cb.board[i, y].OccupiedIsBlack && !isBlack) || (cb.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
                 else {break;}
             }
             for(int i = x-1; i>=0; i--){
-                if(!ChessGame.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
-                else if((ChessGame.board[i, y].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
+                if(!cb.board[i, y].Occupied){moves.Add(new Vector2i(i, y));}
+                else if((cb.board[i, y].OccupiedIsBlack && !isBlack) || (cb.board[i, y].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, y)); break;}
                 else {break;}
             }
             for(int i = y+1; i<8; i++){
-                if(!ChessGame.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
-                else if((ChessGame.board[x, i].OccupiedIsBlack && !isBlack) || (ChessGame.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
+                if(!cb.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
+                else if((cb.board[x, i].OccupiedIsBlack && !isBlack) || (cb.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
                 else {break;}
             }
             for(int i = y-1; i>=0; i--){
-                if(!ChessGame.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
-                else if((ChessGame.board[x, i].OccupiedIsBlack && !isBlack) || (ChessGame.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
+                if(!cb.board[x, i].Occupied){moves.Add(new Vector2i(x, i));}
+                else if((cb.board[x, i].OccupiedIsBlack && !isBlack) || (cb.board[x, i].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(x, i)); break;}
                 else {break;}
             }
             int j = y+1;
             for(int i = x+1; i<8 && j<8; i++){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j++;
             }
             j = y-1;
             for(int i = x+1; i<8 && j>=0; i++){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j--;
             }
             j = y+1;
             for(int i = x-1; i>=0 && j<8; i--){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j++;
             }
             j = y-1;
             for(int i = x-1; i>=0 && j>=0; i--){
-                if(!ChessGame.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
-                else if((ChessGame.board[i, j].OccupiedIsBlack && !isBlack) || (ChessGame.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
+                if(!cb.board[i, j].Occupied){moves.Add(new Vector2i(i, j));}
+                else if((cb.board[i, j].OccupiedIsBlack && !isBlack) || (cb.board[i, j].OccupiedIsWhite && isBlack)){moves.Add(new Vector2i(i, j)); break;}
                 else {break;}
                 j--;
             }
@@ -547,7 +567,6 @@ namespace ChessAI{
                 ChessGame.chessBoard.whiteKingPos.x = x;
                 ChessGame.chessBoard.whiteKingPos.y = y;
             }
-            ChessGame.chessBoard.fullCheckDetection = true;
             moved = true;
             base.Move(x, y);
         }
@@ -572,57 +591,55 @@ namespace ChessAI{
                 cb.whiteKingPos.x = x;
                 cb.whiteKingPos.y = y;
             }
-            cb.fullCheckDetection = true;
             moved = true;
             base.Move(x, y, cb);
         }
 
-        public override Vector2i[] AvailableMoves(){
+        public override Vector2i[] AvailableMoves(ChessBoard cb = null){
             List<Vector2i> moves = new List<Vector2i>();
+            if(cb == null) cb = ChessGame.chessBoard;
             if(isBlack){
-                if(!moved && !ChessGame.chessBoard.AttackedByWhite(x, y)){
-                    ChessBoard b = ChessGame.chessBoard;
-                    if(b.board[0, 7].piece != null && b.board[0, 7].piece.GetType() == typeof(Rook) && !((Rook) b.board[0, 7].piece).moved){
-                        if(!b.AttackedByWhite(3,7) && !b.board[3,7].Occupied && !b.AttackedByWhite(2,7) && !b.board[2,7].Occupied && !b.board[1,7].Occupied){
+                if(!moved && !cb.AttackedByWhite(x, y)){
+                    if(cb.board[0, 7].piece != null && cb.board[0, 7].piece.GetType() == typeof(Rook) && !((Rook) cb.board[0, 7].piece).moved){
+                        if(!cb.AttackedByWhite(3,7) && !cb.board[3,7].Occupied && !cb.AttackedByWhite(2,7) && !cb.board[2,7].Occupied && !cb.board[1,7].Occupied){
                             moves.Add(new Vector2i(2, 7));
                         }
                     }
-                    if(b.board[7, 7].piece != null && b.board[7, 7].piece.GetType() == typeof(Rook) && !((Rook) b.board[7, 7].piece).moved){
-                        if(!b.AttackedByWhite(5,7) && !b.board[5,7].Occupied && !b.AttackedByWhite(6,7) && !b.board[6,7].Occupied){
+                    if(cb.board[7, 7].piece != null && cb.board[7, 7].piece.GetType() == typeof(Rook) && !((Rook) cb.board[7, 7].piece).moved){
+                        if(!cb.AttackedByWhite(5,7) && !cb.board[5,7].Occupied && !cb.AttackedByWhite(6,7) && !cb.board[6,7].Occupied){
                             moves.Add(new Vector2i(6, 7));
                         }
                     }
                 }
-                if(x+1<8 && y+1<8 && !ChessGame.board[x+1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+1));
-                if(x-1>=0 && y+1<8 && !ChessGame.board[x-1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+1));
-                if(y+1<8 && !ChessGame.board[x, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x, y+1));
-                if(x+1<8 && y-1>=0 && !ChessGame.board[x+1, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y-1));
-                if(x-1>=0 && y-1>=0 && !ChessGame.board[x-1, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y-1));
-                if(y-1>=0 && !ChessGame.board[x, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x, y-1));
-                if(x-1>=0 && !ChessGame.board[x-1, y].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y));
-                if(x+1<8 && !ChessGame.board[x+1, y].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y));
+                if(x+1<8 && y+1<8 && !cb.board[x+1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y+1));
+                if(x-1>=0 && y+1<8 && !cb.board[x-1, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y+1));
+                if(y+1<8 && !cb.board[x, y+1].OccupiedIsBlack) moves.Add(new Vector2i(x, y+1));
+                if(x+1<8 && y-1>=0 && !cb.board[x+1, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y-1));
+                if(x-1>=0 && y-1>=0 && !cb.board[x-1, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y-1));
+                if(y-1>=0 && !cb.board[x, y-1].OccupiedIsBlack) moves.Add(new Vector2i(x, y-1));
+                if(x-1>=0 && !cb.board[x-1, y].OccupiedIsBlack) moves.Add(new Vector2i(x-1, y));
+                if(x+1<8 && !cb.board[x+1, y].OccupiedIsBlack) moves.Add(new Vector2i(x+1, y));
             } else{
-                if(!moved && !ChessGame.chessBoard.AttackedByBlack(x, y)){
-                    ChessBoard b = ChessGame.chessBoard;
-                    if(b.board[0, 0].piece != null && b.board[0, 0].piece.GetType() == typeof(Rook) && !((Rook) b.board[0, 0].piece).moved){
-                        if(!b.AttackedByBlack(3,0) && !b.board[3,0].Occupied && !b.AttackedByBlack(2,0) && !b.board[2,0].Occupied && !b.board[1,0].Occupied){
+                if(!moved && !cb.AttackedByBlack(x, y)){
+                    if(cb.board[0, 0].piece != null && cb.board[0, 0].piece.GetType() == typeof(Rook) && !((Rook) cb.board[0, 0].piece).moved){
+                        if(!cb.AttackedByBlack(3,0) && !cb.board[3,0].Occupied && !cb.AttackedByBlack(2,0) && !cb.board[2,0].Occupied && !cb.board[1,0].Occupied){
                             moves.Add(new Vector2i(2, 0));
                         }
                     }
-                    if(b.board[7, 0].piece != null && b.board[7, 0].piece.GetType() == typeof(Rook) && !((Rook) b.board[7, 0].piece).moved){
-                        if(!b.AttackedByBlack(5,0) && !b.board[5,0].Occupied && !b.AttackedByBlack(6,0) && !b.board[6,0].Occupied){
+                    if(cb.board[7, 0].piece != null && cb.board[7, 0].piece.GetType() == typeof(Rook) && !((Rook) cb.board[7, 0].piece).moved){
+                        if(!cb.AttackedByBlack(5,0) && !cb.board[5,0].Occupied && !cb.AttackedByBlack(6,0) && !cb.board[6,0].Occupied){
                             moves.Add(new Vector2i(6, 0));
                         }
                     }
                 }
-                if(x+1<8 && y+1<8 && !ChessGame.board[x+1, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y+1));
-                if(x-1>=0 && y+1<8 && !ChessGame.board[x-1, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y+1));
-                if(y+1<8 && !ChessGame.board[x, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x, y+1));
-                if(x+1<8 && y-1>=0 && !ChessGame.board[x+1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-1));
-                if(x-1>=0 && y-1>=0 && !ChessGame.board[x-1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-1));
-                if(y-1>=0 && !ChessGame.board[x, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x, y-1));
-                if(x-1>=0 && !ChessGame.board[x-1, y].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y));
-                if(x+1<8 && !ChessGame.board[x+1, y].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y));
+                if(x+1<8 && y+1<8 && !cb.board[x+1, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y+1));
+                if(x-1>=0 && y+1<8 && !cb.board[x-1, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y+1));
+                if(y+1<8 && !cb.board[x, y+1].OccupiedIsWhite) moves.Add(new Vector2i(x, y+1));
+                if(x+1<8 && y-1>=0 && !cb.board[x+1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y-1));
+                if(x-1>=0 && y-1>=0 && !cb.board[x-1, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y-1));
+                if(y-1>=0 && !cb.board[x, y-1].OccupiedIsWhite) moves.Add(new Vector2i(x, y-1));
+                if(x-1>=0 && !cb.board[x-1, y].OccupiedIsWhite) moves.Add(new Vector2i(x-1, y));
+                if(x+1<8 && !cb.board[x+1, y].OccupiedIsWhite) moves.Add(new Vector2i(x+1, y));
             }
             return moves.ToArray();
         }
