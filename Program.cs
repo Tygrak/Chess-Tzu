@@ -6,9 +6,9 @@ using OpenTK;
 
 namespace ChessAI{
     public class Program{
-        public static void Main(string[] args){
-            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: >>en passant<<
-            game.canvas.NextFrame(game.Initialize);
+        public static void Main(string[] args){                   //TODO:
+            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: >>everything is broken<<, promoting pawns, >>en passant<<
+            game.canvas.NextFrame(game.Initialize);               //Start Working on AI. Maybe later genetic algorythm, that would be fun.
         }
     }
 
@@ -23,8 +23,10 @@ namespace ChessAI{
         public bool paused = false;
         public static float squareSize;
         public bool selected;
+        public bool calculating = false;
         public Vector2i lastSelected;
         public Vector2i[] available;
+        public AI ai = new AI();
         bool debug = false;
 
         public ChessGame(int windowWidth, int windowHeight, int width, int height){
@@ -108,6 +110,15 @@ namespace ChessAI{
             if(timer<0 && !paused){
                 timer = 1;
             }
+            if(!paused && !calculating && ((!whitePlayer && chessBoard.whiteTurn) || (!blackPlayer && !chessBoard.whiteTurn))){
+                calculating = true;
+                Move m = ai.RandomMove(chessBoard);
+                if(m != null){
+                    board[m.xFrom, m.yFrom].piece.Move(m.xTo, m.yTo);
+                }
+                chessBoard.EndTurn();
+                calculating = false;
+            }
         }
 
         public void MouseClick(){
@@ -122,6 +133,7 @@ namespace ChessAI{
                 return;
             }
             if(selected == false){
+                //if(board[x, y].Occupied){
                 if(board[x, y].Occupied && ((board[x, y].piece.isBlack && !chessBoard.whiteTurn && blackPlayer) || (!board[x, y].piece.isBlack && chessBoard.whiteTurn && whitePlayer))){
                     selected = true;
                     lastSelected = new Vector2i(x, y);

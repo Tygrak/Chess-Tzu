@@ -40,10 +40,11 @@ namespace ChessAI{
             return new Vector2i[0];
         }
 
-        public virtual Vector2i[] NonPseudoAvailableMoves(){ //FIXME: This is ineffective AF!
-            List<Vector2i> moves = new List<Vector2i>(AvailableMoves());
+        public virtual Vector2i[] NonPseudoAvailableMoves(ChessBoard cb = null){ //FIXME: This is ineffective AF!
+            if(cb == null) cb = ChessGame.chessBoard;
+            List<Vector2i> moves = new List<Vector2i>(AvailableMoves(cb));
             for (int i = moves.Count-1; i >= 0; i--){
-                if(ChessGame.chessBoard.resultsInCheck(x, y, moves[i].x, moves[i].y)) moves.RemoveAt(i);
+                if(cb.resultsInCheck(x, y, moves[i].x, moves[i].y)) moves.RemoveAt(i);
             }
             return moves.ToArray();
         }
@@ -567,22 +568,23 @@ namespace ChessAI{
                 ChessGame.chessBoard.whiteKingPos.x = x;
                 ChessGame.chessBoard.whiteKingPos.y = y;
             }
+            ChessGame.chessBoard.fullCheckDetection = true;
             moved = true;
             base.Move(x, y);
         }
 
         public override void Move(int x, int y, ChessBoard cb){
             if(!moved && x == 2 && y == 7){
-                cb.board[0, 7].piece.Move(3, 7);
+                cb.board[0, 7].piece.Move(3, 7, cb);
             }
             if(!moved && x == 6 && y == 7){
-                cb.board[7, 7].piece.Move(5, 7);
+                cb.board[7, 7].piece.Move(5, 7, cb);
             }
             if(!moved && x == 2 && y == 0){
-                cb.board[0, 0].piece.Move(3, 0);
+                cb.board[0, 0].piece.Move(3, 0, cb);
             }
             if(!moved && x == 6 && y == 0){
-                cb.board[7, 0].piece.Move(5, 0);
+                cb.board[7, 0].piece.Move(5, 0, cb);
             }
             if(isBlack){
                 cb.blackKingPos.x = x;
@@ -591,6 +593,7 @@ namespace ChessAI{
                 cb.whiteKingPos.x = x;
                 cb.whiteKingPos.y = y;
             }
+            cb.fullCheckDetection = true;
             moved = true;
             base.Move(x, y, cb);
         }

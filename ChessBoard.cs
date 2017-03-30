@@ -86,6 +86,10 @@ namespace ChessAI{
 
         public void CheckDetect(){
             Piece p = board[lastMoveTo.x, lastMoveTo.y].piece;
+            if(p == null){
+                Console.WriteLine("Check Detect p is null");
+                return;
+            }
             if(!fullCheckDetection){
                 whiteCheck = false;
                 blackCheck = false;
@@ -97,22 +101,33 @@ namespace ChessAI{
                         break;
                     }
                 }
-                //Console.WriteLine("Pieces checking: " + checking.Count + ", black? " + checkingIsBlack);
+                Console.WriteLine("Pieces checking: " + checking.Count + ", black? " + checkingIsBlack);
                 for (int i = checking.Count-1; i >= 0; i--){
-                    if(checkingIsBlack){
-                        Vector2i ray = new Vector2i(checking[i].x - whiteKingPos.x, checking[i].y - whiteKingPos.y);
+                    if(board[checking[i].x, checking[i].y].piece != null){
+                        int cx = checking[i].x;
+                        int cy = checking[i].y;
                         checking.RemoveAt(i);
-                        if(checkRayWhite(ray)){
-                            whiteCheck = true;
+                        if(checkingIsBlack){
+                            moves = board[cx, cy].piece.AvailableMoves(this);
+                            for (int k = 0; k < moves.Length; k++){
+                                if(moves[k].x == whiteKingPos.x && moves[k].y == whiteKingPos.y){
+                                    checking.Add(new Vector2i(cx, cy));
+                                    whiteCheck = true;
+                                }
+                            }
+                        } else{
+                            moves = board[cx, cy].piece.AvailableMoves(this);
+                            for (int k = 0; k < moves.Length; k++){
+                                if(moves[k].x == blackKingPos.x && moves[k].y == blackKingPos.y){
+                                    checking.Add(new Vector2i(cx, cy));
+                                    blackCheck = true;
+                                }
+                            }
                         }
                     } else{
-                        Vector2i ray = new Vector2i(checking[i].x - blackKingPos.x, checking[i].y - blackKingPos.y);
                         checking.RemoveAt(i);
-                        if(checkRayBlack(ray)){
-                            blackCheck = true;
-                        }
                     }
-                }
+                }           
                 if(p.GetType() == typeof(Knight)){
                     if(p.isBlack){
                         moves = p.AvailableMoves(this);
@@ -131,7 +146,7 @@ namespace ChessAI{
                             }
                         }
                     }
-                }
+                }              
                 Vector2i ray1 = new Vector2i(p.x - whiteKingPos.x, p.y - whiteKingPos.y);
                 Vector2i ray2 = new Vector2i(p.x - blackKingPos.x, p.y - blackKingPos.y);
                 Vector2i ray3 = new Vector2i(lastMoveFrom.x - whiteKingPos.x, lastMoveFrom.y - whiteKingPos.y);
@@ -142,8 +157,57 @@ namespace ChessAI{
                 if(checkRayBlack(ray4)) blackCheck = true;
                 //Console.WriteLine("1: " + ray1.x +", "+ray1.y + " 2: " + ray2.x +", "+ray2.y+ " 3: " + ray3.x +", "+ray3.y+ " 4: " + ray4.x +", "+ray4.y);
             } else{
-                whiteCheck = AttackedByBlack(whiteKingPos.x, whiteKingPos.y);
-                blackCheck = AttackedByWhite(blackKingPos.x, blackKingPos.y);
+                if(p.isBlack){
+                    int x = blackKingPos.x;
+                    int y = blackKingPos.y;
+                    for (int i = 0; i < 8; i++){
+                        for (int j = 0; j < 8; j++){
+                            if(ChessGame.board[i, j].OccupiedIsWhite){
+                                if(ChessGame.board[i, j].piece.GetType() != typeof(King)){
+                                    Vector2i[] moves = ChessGame.board[i, j].piece.AvailableMoves(this);
+                                    for (int k = 0; k < moves.Length; k++){
+                                        if(moves[k].x == x && moves[k].y == y){
+                                            checking.Add(new Vector2i(i, j));
+                                            blackCheck = true;
+                                            break;
+                                        }
+                                    }
+                                } else{
+                                    if((x == i+1 || x == i-1) && (y == j || y == j+1 || y == j-1) || y == j+1 || y == j-1){
+                                        checking.Add(new Vector2i(i, j));
+                                        blackCheck = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else{
+                    int x = whiteKingPos.x;
+                    int y = whiteKingPos.y;
+                    for (int i = 0; i < 8; i++){
+                        for (int j = 0; j < 8; j++){
+                            if(ChessGame.board[i, j].OccupiedIsBlack){
+                                if(ChessGame.board[i, j].piece.GetType() != typeof(King)){
+                                    Vector2i[] moves = ChessGame.board[i, j].piece.AvailableMoves(this);
+                                    for (int k = 0; k < moves.Length; k++){
+                                        if(moves[k].x == x && moves[k].y == y){
+                                            checking.Add(new Vector2i(i, j));
+                                            whiteCheck = true;
+                                            break;
+                                        }
+                                    }
+                                } else{
+                                    if((x == i+1 || x == i-1) && (y == j || y == j+1 || y == j-1) || y == j+1 || y == j-1){
+                                        checking.Add(new Vector2i(i, j));
+                                        whiteCheck = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if(!whiteCheck && !blackCheck) fullCheckDetection = false;
             }
             //if(whiteCheck) Console.WriteLine("Check on white.");
@@ -221,7 +285,6 @@ namespace ChessAI{
                 for (int i = 0; i < 8; i++){
                     for (int j = 0; j < 8; j++){
                         if(ChessGame.board[i, j].OccupiedIsWhite){
-                            Console.WriteLine(ChessGame.board[i, j].piece.NonPseudoAvailableMoves().Length);
                             if(ChessGame.board[i, j].piece.NonPseudoAvailableMoves().Length > 0) return false;
                         }
                     }
@@ -243,6 +306,7 @@ namespace ChessAI{
         }
 
         public void EndTurn(){
+            ChessGame.current.calculating = true;
             CheckDetect();
             whiteTurn = !whiteTurn;
             if(whiteTurn){
@@ -257,6 +321,7 @@ namespace ChessAI{
             }
             if(whiteCheck) Console.WriteLine("Check on white.");
             else if(blackCheck) Console.WriteLine("Check on black.");
+            ChessGame.current.calculating = false;
         }
     }
 
