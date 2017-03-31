@@ -22,6 +22,23 @@ namespace ChessAI{
         public List<Vector2i> checking;
 
         public AI(){
+            board = new ChessBoard(ChessGame.chessBoard);
+        }
+
+        public int EvaluateBoard(ChessBoard cb){
+            int score = 0;
+            for (int i = 0; i < 8; i++){
+                for (int j = 0; j < 8; j++){
+                    if(cb.board[i, j].Occupied){
+                        if(!cb.board[i, j].piece.isBlack){
+                            score += cb.board[i, j].piece.GetValue();
+                        } else{
+                            score -= cb.board[i, j].piece.GetValue();
+                        }
+                    }
+                }
+            }
+            return score;
         }
 
         public Move RandomMove(ChessBoard cb){
@@ -30,18 +47,15 @@ namespace ChessAI{
             for (int i = 0; i < 8; i++){
                 for (int j = 0; j < 8; j++){
                     if((cb.board[i, j].OccupiedIsWhite && cb.whiteTurn) || (cb.board[i, j].OccupiedIsBlack && !cb.whiteTurn)){
-                        if(cb.board[i, j].piece.GetType() != typeof(King)){
-                            Vector2i[] moves = cb.board[i, j].piece.NonPseudoAvailableMoves(cb);
-                            Console.WriteLine("moves ai: " + moves.Length);
-                            for (int k = 0; k < moves.Length; k++){
-                                availableMoves.Add(new Move(i, j, moves[k].x, moves[k].y));
-                            }
+                        Vector2i[] moves = cb.board[i, j].piece.NonPseudoAvailableMoves(cb);
+                        for (int k = 0; k < moves.Length; k++){
+                            availableMoves.Add(new Move(i, j, moves[k].x, moves[k].y));
                         }
                     }
                 }
             }
             int rand = r.Next(0, availableMoves.Count);
-            Console.WriteLine(availableMoves.Count + ", " + rand);
+            Console.WriteLine("M" + cb.movesFromStart + ": " + cb.lastMoveFrom.x + ", " + cb.lastMoveFrom.y + " : " + cb.lastMoveTo.x + ", " + cb.lastMoveTo.y + " val: " + EvaluateBoard(ChessGame.chessBoard) + " : " + availableMoves.Count + ", " + rand);
             if(availableMoves.Count == 0){
                 return null;
             }

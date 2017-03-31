@@ -17,18 +17,26 @@ namespace ChessAI{
         public virtual void Move(int x, int y){
             ChessGame.board[this.x, this.y].piece = null;
             group.MoveTo(ChessGame.squareSize*x, ChessGame.squareSize*y);
+            ChessGame.chessBoard.lastMoveFrom = new Vector2i(this.x, this.y);
             this.x = x;
             this.y = y;
             if(ChessGame.board[x, y].piece != null){
+                ChessGame.chessBoard.movesFromCapture = -1;
                 ChessGame.current.canvas.RemoveDrawable(ChessGame.board[x, y].piece.group);
             }
+            ChessGame.chessBoard.lastMoveTo = new Vector2i(x, y);
             ChessGame.board[x, y].piece = this;
         }
 
         public virtual void Move(int x, int y, ChessBoard cb){
             cb.board[this.x, this.y].piece = null;
+            cb.lastMoveFrom = new Vector2i(this.x, this.y);
             this.x = x;
             this.y = y;
+            if(ChessGame.board[x, y].piece != null){
+                ChessGame.chessBoard.movesFromCapture = -1;
+            }
+            cb.lastMoveTo = new Vector2i(x, y);
             cb.board[x, y].piece = this;
         }
 
@@ -84,6 +92,26 @@ namespace ChessAI{
             group.Add(s);
             group.Move(ChessGame.squareSize*x, ChessGame.squareSize*y);
             ChessGame.current.canvas.Draw(group);
+        }
+
+        public override void Move(int x, int y){
+            base.Move(x, y);
+            if(isBlack && y == 0){
+                ChessGame.current.canvas.RemoveDrawable(ChessGame.board[x, y].piece.group);
+                ChessGame.board[x, y].piece = new Queen(x, y, true);
+            } else if(!isBlack && y == 7){
+                ChessGame.current.canvas.RemoveDrawable(ChessGame.board[x, y].piece.group);
+                ChessGame.board[x, y].piece = new Queen(x, y, false);
+            }
+        }
+
+        public override void Move(int x, int y, ChessBoard cb){
+            base.Move(x, y, cb);
+            if(isBlack && y == 0){
+                cb.board[x, y].piece = new Queen(x, y, true, false);
+            } else if(!isBlack && y == 7){
+                cb.board[x, y].piece = new Queen(x, y, false, false);
+            }
         }
 
         public override int GetValue(){
@@ -429,6 +457,16 @@ namespace ChessAI{
             group.Add(t);
             group.Move(ChessGame.squareSize*x, ChessGame.squareSize*y);
             ChessGame.current.canvas.Draw(group);
+        }
+
+        public Queen(int x, int y, bool isBlack, bool draw){
+            if(draw){
+                Queen q = new Queen(x, y, isBlack);
+                this.group = q.group;
+            }
+            this.x = x;
+            this.y = y;
+            this.isBlack = isBlack;
         }
 
         public override int GetValue(){

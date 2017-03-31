@@ -7,7 +7,7 @@ using OpenTK;
 namespace ChessAI{
     public class Program{
         public static void Main(string[] args){                   //TODO:
-            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: >>everything is broken<<, promoting pawns, >>en passant<<
+            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: promoting pawns, >>en passant<<
             game.canvas.NextFrame(game.Initialize);               //Start Working on AI. Maybe later genetic algorythm, that would be fun.
         }
     }
@@ -18,15 +18,16 @@ namespace ChessAI{
         public static ChessBoard chessBoard;
         public static ChessSquare[,] board;
         public double timer = 1;
-        public bool whitePlayer = true;
-        public bool blackPlayer = true;
+        public bool whitePlayer = false;
+        public bool blackPlayer = false;
         public bool paused = false;
         public static float squareSize;
         public bool selected;
         public bool calculating = false;
         public Vector2i lastSelected;
         public Vector2i[] available;
-        public AI ai = new AI();
+        public Group gSelect;
+        public AI ai;
         bool debug = false;
 
         public ChessGame(int windowWidth, int windowHeight, int width, int height){
@@ -34,6 +35,7 @@ namespace ChessAI{
             canvas = new Canvas(windowWidth, windowHeight);
             chessBoard = new ChessBoard();
             board = chessBoard.board;
+            ai = new AI();
             squareSize = 100.0f / 8;
         }
 
@@ -46,7 +48,8 @@ namespace ChessAI{
             canvas.mouseActions.Add(new MouseAction(MouseButton.Left, MouseClick));
             DrawBoard();
             SetupBoard();
-            canvas.Draw(new Group(0, 0));
+            gSelect = new Group(0, 0);
+            canvas.Draw(gSelect);
         }
 
         public void DrawBoard(){
@@ -107,10 +110,7 @@ namespace ChessAI{
         public void Update(){
             double delta = canvas.DeltaTime;
             timer -= delta;
-            if(timer<0 && !paused){
-                timer = 1;
-            }
-            if(!paused && !calculating && ((!whitePlayer && chessBoard.whiteTurn) || (!blackPlayer && !chessBoard.whiteTurn))){
+            if(timer<0 && !paused && !calculating && ((!whitePlayer && chessBoard.whiteTurn) || (!blackPlayer && !chessBoard.whiteTurn))){
                 calculating = true;
                 Move m = ai.RandomMove(chessBoard);
                 if(m != null){
@@ -118,6 +118,7 @@ namespace ChessAI{
                 }
                 chessBoard.EndTurn();
                 calculating = false;
+                timer = 0.25f;
             }
         }
 
@@ -142,32 +143,23 @@ namespace ChessAI{
                         selected = false;
                         return;
                     }
-                    Group g = new Group(0, 0);
-                    //Console.WriteLine(canvas.toDraw.Count + ", " + selected.objects.Count + ", " + available.Length);
+                    gSelect.objects.Clear();
                     for (int i = 0; i < available.Length; i++){
                         Circle c = new Circle(available[i].x*squareSize+squareSize/2, available[i].y*squareSize+squareSize/2, 2);
                         c.color = Colorb.Red;
-                        g.Add(c);
+                        gSelect.Add(c);
                     }
-                    canvas.toDraw.RemoveAt(canvas.toDraw.Count-1);
-                    canvas.Draw(g);
                 }
             } else if(available != null && new List<Vector2i>(available).Contains(new Vector2i(x, y))){
-                chessBoard.lastMoveFrom = lastSelected;
-                chessBoard.lastMoveTo = new Vector2i(x, y);
                 board[lastSelected.x, lastSelected.y].piece.Move(x, y);
                 selected = false;
-                Group g = new Group(0, 0);
-                canvas.toDraw.RemoveAt(canvas.toDraw.Count-1);
-                canvas.Draw(g);
+                gSelect.objects.Clear();
                 if(!debug){
                     chessBoard.EndTurn();
                 }
             } else{
                 selected = false;
-                Group g = new Group(0, 0);
-                canvas.toDraw.RemoveAt(canvas.toDraw.Count-1);
-                canvas.Draw(g);
+                gSelect.objects.Clear();
             }
         }
     }
