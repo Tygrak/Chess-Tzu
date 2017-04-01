@@ -11,7 +11,7 @@ namespace ChessAI{
         public bool isBlack;
  
         public virtual int GetValue(){
-            return 1;
+            return 100;
         }
         
         public virtual void Move(int x, int y){
@@ -115,7 +115,13 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 1;
+            int val = 100;
+            if(isBlack){
+                val += 6-y;
+            } else{
+                val += y-1;
+            }
+            return 100;
         }
 
         public override Vector2i[] AvailableMoves(ChessBoard cb = null){
@@ -211,7 +217,7 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 5;
+            return 500;
         }
 
         public override Vector2i[] AvailableMoves(ChessBoard cb = null){
@@ -269,7 +275,7 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 3;
+            return 300;
         }
 
         public override Vector2i[] AvailableMoves(ChessBoard cb = null){
@@ -348,7 +354,7 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 3;
+            return 300;
         }
 
         public override Vector2i[] AvailableMoves(ChessBoard cb = null){
@@ -470,7 +476,7 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 9;
+            return 900;
         }
 
         public override Vector2i[] AvailableMoves(ChessBoard cb = null){
@@ -686,7 +692,7 @@ namespace ChessAI{
         }
 
         public override int GetValue(){
-            return 30;
+            return 3000;
         }
     }
 }

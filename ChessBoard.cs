@@ -100,6 +100,7 @@ namespace ChessAI{
                 blackCheck = false;
                 Vector2i[] moves;
                 bool checkingIsBlack = false;
+                //Console.WriteLine("Yarrr? " + lastMoveTo.x + ", " + lastMoveTo.y);
                 for (int i = 0; i < checking.Count; i++){
                     if(board[checking[checking.Count-1].x, checking[checking.Count-1].y].piece != null){
                         checkingIsBlack = board[checking[checking.Count-1].x, checking[checking.Count-1].y].piece.isBlack;
@@ -275,6 +276,7 @@ namespace ChessAI{
 
         public bool resultsInCheck(int fromX, int fromY, int toX, int toY){
             ChessBoard clone = new ChessBoard(this);
+            //Console.WriteLine(fromX + ", " + fromY + " : " + toX + ", " + toY);
             clone.board[fromX, fromY].piece.Move(toX, toY, clone);
             clone.lastMoveFrom = new Vector2i(fromX, fromY);
             clone.lastMoveTo = new Vector2i(toX, toY);
@@ -289,11 +291,10 @@ namespace ChessAI{
 
         public bool CheckmateDetect(){
             if(whiteCheck && whiteTurn){
-                Console.WriteLine("Checking white.");
                 for (int i = 0; i < 8; i++){
                     for (int j = 0; j < 8; j++){
                         if(board[i, j].OccupiedIsWhite){
-                            if(board[i, j].piece.NonPseudoAvailableMoves().Length > 0) return false;
+                            if(board[i, j].piece.NonPseudoAvailableMoves(this).Length > 0) return false;
                         }
                     }
                 }
@@ -303,7 +304,7 @@ namespace ChessAI{
                 for (int i = 0; i < 8; i++){
                     for (int j = 0; j < 8; j++){
                         if(board[i, j].OccupiedIsBlack){
-                            if(board[i, j].piece.NonPseudoAvailableMoves().Length > 0) return false;
+                            if(board[i, j].piece.NonPseudoAvailableMoves(this).Length > 0) return false;
                         }
                     }
                 }
@@ -321,30 +322,33 @@ namespace ChessAI{
             return false;
         }
 
-        public void EndTurn(){
-            ChessGame.current.calculating = true;
+        public void EndTurn(bool quiet = false){
+            if(!quiet) ChessGame.current.calculating = true;
             CheckDetect();
             whiteTurn = !whiteTurn;
-            if(whiteTurn){
-                Console.WriteLine("White turn.");
-            } else{
-                Console.WriteLine("Black turn.");
+            if(!quiet){
+                if(whiteTurn){
+                    Console.WriteLine("White turn. Value: " + AI.EvaluateBoard(this));
+                } else{
+                    Console.WriteLine("Black turn. Value: " + AI.EvaluateBoard(this));
+                }
+                if(CheckmateDetect()){
+                    Console.WriteLine("The game has ended.");
+                    ChessGame.current.paused = true;
+                    return;
+                }
+                if(EndDetect()){
+                    Console.WriteLine("The game has ended.");
+                    ChessGame.current.paused = true;
+                    return;
+                }
+                if(whiteCheck) Console.WriteLine("Check on white.");
+                else if(blackCheck) Console.WriteLine("Check on black.");
+                ChessGame.current.calculating = false;
             }
-            if(CheckmateDetect()){
-                Console.WriteLine("The game has ended.");
-                ChessGame.current.paused = true;
-                return;
-            }
-            if(EndDetect()){
-                Console.WriteLine("The game has ended.");
-                ChessGame.current.paused = true;
-                return;
-            }
-            if(whiteCheck) Console.WriteLine("Check on white.");
-            else if(blackCheck) Console.WriteLine("Check on black.");
             movesFromStart++;
             movesFromCapture++;
-            ChessGame.current.calculating = false;
+            Console.WriteLine("poop");
         }
     }
 

@@ -6,8 +6,8 @@ using OpenTK;
 
 namespace ChessAI{
     public class Program{
-        public static void Main(string[] args){                   //TODO:
-            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: promoting pawns, >>en passant<<
+        public static void Main(string[] args){                   //TODO: !KillYourself
+            ChessGame game = new ChessGame(1000, 1000, 100, 100); //Still missing rules: >>en passant<<
             game.canvas.NextFrame(game.Initialize);               //Start Working on AI. Maybe later genetic algorythm, that would be fun.
         }
     }
@@ -19,7 +19,7 @@ namespace ChessAI{
         public static ChessSquare[,] board;
         public double timer = 1;
         public bool whitePlayer = false;
-        public bool blackPlayer = false;
+        public bool blackPlayer = true;
         public bool paused = false;
         public static float squareSize;
         public bool selected;
@@ -27,7 +27,8 @@ namespace ChessAI{
         public Vector2i lastSelected;
         public Vector2i[] available;
         public Group gSelect;
-        public AI ai;
+        public AI aiB;
+        public AI aiW;
         bool debug = false;
 
         public ChessGame(int windowWidth, int windowHeight, int width, int height){
@@ -35,7 +36,12 @@ namespace ChessAI{
             canvas = new Canvas(windowWidth, windowHeight);
             chessBoard = new ChessBoard();
             board = chessBoard.board;
-            ai = new AI();
+            if(!blackPlayer){
+                aiB = new AI(true);
+            }
+            if(!whitePlayer){
+                aiW = new AI(false);
+            }
             squareSize = 100.0f / 8;
         }
 
@@ -110,14 +116,28 @@ namespace ChessAI{
         public void Update(){
             double delta = canvas.DeltaTime;
             timer -= delta;
-            if(timer<0 && !paused && !calculating && ((!whitePlayer && chessBoard.whiteTurn) || (!blackPlayer && !chessBoard.whiteTurn))){
-                calculating = true;
-                Move m = ai.RandomMove(chessBoard);
-                if(m != null){
-                    board[m.xFrom, m.yFrom].piece.Move(m.xTo, m.yTo);
+            if(timer<0 && !paused && !calculating){
+                if(!whitePlayer && chessBoard.whiteTurn){
+                    calculating = true;
+                    Move m = aiW.NextMove(chessBoard);
+                    if(m != null && board[m.xFrom, m.yFrom].Occupied){
+                        board[m.xFrom, m.yFrom].piece.Move(m.xTo, m.yTo);
+                    } else{
+                        Console.WriteLine("Error. White AI chose a illegal move.");
+                    }
+                    chessBoard.EndTurn();
+                    calculating = false;
+                } else if(!blackPlayer && !chessBoard.whiteTurn){
+                    calculating = true;
+                    Move m = aiB.NextMove(chessBoard);
+                    if(m != null && board[m.xFrom, m.yFrom].Occupied){
+                        board[m.xFrom, m.yFrom].piece.Move(m.xTo, m.yTo);
+                    } else{
+                        Console.WriteLine("Error. Black AI chose a illegal move.");
+                    }
+                    chessBoard.EndTurn();
+                    calculating = false;
                 }
-                chessBoard.EndTurn();
-                calculating = false;
                 timer = 0.25f;
             }
         }
